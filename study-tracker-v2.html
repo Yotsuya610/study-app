@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#4A7C59">
+<title>StudyLog Pro</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #F5F3EE; --surface: #FFFFFF;
+  --primary: #4A7C59; --primary-light: #E8F1EB; --primary-dark: #2D5A3D;
+  --accent: #E8824A; --accent-light: #FDF0E8;
+  --purple: #7C5CBF; --purple-light: #EDE8F7;
+  --blue: #3A7BD5; --blue-light: #E8F0FB;
+  --red: #C0392B; --red-light: #FDE8E8;
+  --text: #2C2C2C; --text-muted: #888880;
+  --border: #E8E5DE;
+  --shadow: 0 2px 12px rgba(0,0,0,0.08);
+  --radius: 16px; --radius-sm: 10px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 90px; }
+
+/* HEADER */
+.app-header { background: var(--surface); padding: 13px 16px 10px; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 200; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.app-logo { font-family: 'DM Serif Display', serif; font-size: 19px; color: var(--primary-dark); }
+.date-nav { display: flex; align-items: center; gap: 4px; background: var(--bg); border-radius: 50px; padding: 3px 7px; }
+.date-nav button { background: none; border: none; cursor: pointer; color: var(--primary); font-size: 16px; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: background .2s; }
+.date-nav button:hover { background: var(--primary-light); }
+#date-display { font-size: 12px; font-weight: 700; color: var(--text); cursor: pointer; white-space: nowrap; }
+#date-picker-input { position: fixed; opacity: 0; pointer-events: none; top: 60px; left: 50%; }
+
+/* TABS */
+.tab-nav { background: var(--surface); display: flex; overflow-x: auto; border-bottom: 1px solid var(--border); position: sticky; top: 55px; z-index: 199; scrollbar-width: none; }
+.tab-nav::-webkit-scrollbar { display: none; }
+.tab-btn { flex: 0 0 auto; min-width: 56px; padding: 9px 10px; background: none; border: none; cursor: pointer; font-family: 'Nunito', sans-serif; font-size: 11px; font-weight: 700; color: var(--text-muted); border-bottom: 3px solid transparent; transition: all .2s; display: flex; flex-direction: column; align-items: center; gap: 2px; white-space: nowrap; }
+.tab-btn .ti { font-size: 16px; }
+.tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+/* CONTENT */
+.tab-content { display: none; padding: 14px 13px; }
+.tab-content.active { display: block; }
+
+/* CARD */
+.card { background: var(--surface); border-radius: var(--radius); padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow); border: 1px solid var(--border); }
+.card-title { font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 12px; }
+
+/* BUTTONS */
+.btn { padding: 10px 22px; border: none; border-radius: 50px; font-family: 'Nunito', sans-serif; font-size: 14px; font-weight: 800; cursor: pointer; transition: all .2s; }
+.btn:active { transform: scale(.96); }
+.btn-primary { background: var(--primary); color: #fff; box-shadow: 0 4px 14px rgba(74,124,89,.35); }
+.btn-primary:hover { background: var(--primary-dark); }
+.btn-accent { background: var(--accent); color: #fff; box-shadow: 0 4px 14px rgba(232,130,74,.35); }
+.btn-secondary { background: var(--bg); color: var(--text); border: 2px solid var(--border); }
+.btn-danger { background: var(--red-light); color: var(--red); }
+.btn-purple { background: var(--purple); color: #fff; }
+.btn-sm { padding: 6px 13px; font-size: 12px; }
+.btn-xs { padding: 4px 9px; font-size: 11px; }
+
+/* TIMER */
+.timer-display { text-align: center; padding: 18px 0 14px; }
+.timer-time { font-family: 'DM Serif Display', serif; font-size: 66px; color: var(--text); letter-spacing: -2px; line-height: 1; transition: color .3s; }
+.timer-running .timer-time { color: var(--primary); }
+.timer-paused .timer-time { color: var(--accent); }
+.timer-subject-select { margin: 12px auto 0; display: block; width: 100%; max-width: 260px; padding: 9px 16px; border: 2px solid var(--border); border-radius: 50px; font-family: 'Nunito', sans-serif; font-size: 14px; font-weight: 700; color: var(--text); background: var(--bg); cursor: pointer; text-align: center; }
+.timer-type-badge { display: inline-block; margin-top: 8px; padding: 3px 12px; border-radius: 50px; font-size: 11px; font-weight: 800; letter-spacing: .5px; }
+.badge-memory { background: var(--purple-light); color: var(--purple); }
+.badge-calculation { background: var(--blue-light); color: var(--blue); }
+.timer-controls { display: flex; justify-content: center; gap: 10px; margin-top: 16px; }
+
+/* PROGRESS */
+.progress-bar-wrap { background: var(--bg); border-radius: 50px; height: 10px; overflow: hidden; margin: 8px 0 5px; }
+.progress-bar-fill { height: 100%; border-radius: 50px; background: linear-gradient(90deg, var(--primary), #6BAF7A); transition: width .5s ease; }
+
+/* DAY TOTAL */
+.day-total { display: flex; align-items: center; justify-content: space-between; background: var(--primary-light); border-radius: var(--radius-sm); padding: 11px 14px; margin-bottom: 12px; }
+.day-total-label { font-size: 12px; font-weight: 700; color: var(--primary-dark); }
+.day-total-value { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--primary-dark); }
+
+/* RECORDS */
+.record-item { display: flex; align-items: center; gap: 7px; padding: 9px 0; border-bottom: 1px solid var(--border); }
+.record-item:last-child { border-bottom: none; }
+.record-subject-badge { background: var(--primary-light); color: var(--primary-dark); padding: 3px 9px; border-radius: 50px; font-size: 11px; font-weight: 800; white-space: nowrap; flex-shrink: 0; }
+.record-type-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.dot-memory { background: var(--purple); }
+.dot-calculation { background: var(--blue); }
+.record-time { font-family: 'DM Serif Display', serif; font-size: 16px; color: var(--text); flex-shrink: 0; margin-left: auto; }
+.record-note { font-size: 10px; color: var(--text-muted); font-style: italic; max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.icon-btn { background: none; border: none; cursor: pointer; font-size: 14px; padding: 4px; border-radius: 6px; transition: background .2s; }
+.icon-btn:hover { background: var(--bg); }
+
+/* TASKS */
+.task-item { display: flex; align-items: flex-start; gap: 7px; padding: 9px 0; border-bottom: 1px solid var(--border); }
+.task-item:last-child { border-bottom: none; }
+.task-rank-badge { width: 26px; height: 26px; border-radius: 7px; font-size: 12px; font-weight: 900; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.rank-S { background: #FEF3CD; color: #B7770D; }
+.rank-A { background: #FCE4EC; color: #AD1457; }
+.rank-B { background: var(--blue-light); color: var(--blue); }
+.rank-C { background: var(--bg); color: var(--text-muted); border: 1px solid var(--border); }
+.task-info { flex: 1; min-width: 0; }
+.task-subject { font-size: 10px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: .5px; }
+.task-text { font-size: 13px; font-weight: 600; color: var(--text); margin-top: 2px; word-break: break-word; }
+.task-goal { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+.task-carryover { font-size: 10px; color: var(--accent); font-weight: 700; }
+
+.task-add-form { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.task-add-form input, .task-add-form select { padding: 9px 12px; border: 2px solid var(--border); border-radius: var(--radius-sm); font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 600; outline: none; background: var(--bg); transition: border .2s; width: 100%; }
+.task-add-form input:focus, .task-add-form select:focus { border-color: var(--primary); }
+.rank-select-row { display: flex; gap: 6px; }
+.rank-option { flex: 1; padding: 8px 4px; border: 2px solid var(--border); border-radius: var(--radius-sm); background: var(--bg); font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 900; cursor: pointer; text-align: center; transition: all .2s; }
+.rank-option.sel-S { border-color: #B7770D; background: #FEF3CD; color: #B7770D; }
+.rank-option.sel-A { border-color: #AD1457; background: #FCE4EC; color: #AD1457; }
+.rank-option.sel-B { border-color: var(--blue); background: var(--blue-light); color: var(--blue); }
+.rank-option.sel-C { border-color: var(--text-muted); background: var(--bg); color: var(--text-muted); }
+
+/* REVIEW */
+.review-item { display: flex; align-items: center; gap: 8px; padding: 9px 0; border-bottom: 1px solid var(--border); }
+.review-item:last-child { border-bottom: none; }
+.review-stage { background: var(--purple-light); color: var(--purple); padding: 3px 9px; border-radius: 50px; font-size: 11px; font-weight: 800; white-space: nowrap; flex-shrink: 0; }
+.review-info { flex: 1; min-width: 0; }
+.review-subject { font-size: 13px; font-weight: 700; color: var(--text); }
+.review-date { font-size: 11px; color: var(--text-muted); }
+.review-overdue { font-size: 10px; font-weight: 800; color: var(--red); background: var(--red-light); padding: 2px 7px; border-radius: 50px; flex-shrink: 0; }
+
+/* SUBJECTS */
+.subject-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 4px; }
+.subject-chip { display: flex; align-items: center; gap: 5px; padding: 5px 11px; border-radius: 50px; font-size: 12px; font-weight: 700; border: 2px solid var(--border); background: var(--bg); transition: all .2s; }
+.subject-chip:hover { border-color: var(--primary); }
+.chip-type { font-size: 10px; opacity: .75; }
+.chip-del { color: var(--text-muted); font-size: 13px; cursor: pointer; margin-left: 2px; }
+.chip-del:hover { color: var(--red); }
+.add-subject-row { display: flex; gap: 7px; margin-top: 10px; flex-wrap: wrap; }
+.add-subject-row input, .add-subject-row select { padding: 8px 12px; border: 2px solid var(--border); border-radius: 50px; font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 600; outline: none; background: var(--bg); transition: border .2s; }
+.add-subject-row input { flex: 1; min-width: 90px; }
+.add-subject-row input:focus, .add-subject-row select:focus { border-color: var(--primary); }
+
+/* CHARTS */
+.chart-wrap { position: relative; height: 195px; }
+.chart-wrap-lg { position: relative; height: 230px; }
+
+/* STATS GRID */
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-bottom: 12px; }
+.stats-grid-4 { grid-template-columns: 1fr 1fr; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 11px 13px; box-shadow: var(--shadow); }
+.stat-label { font-size: 10px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; }
+.stat-value { font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--text); margin-top: 2px; }
+
+/* WEEK GOAL */
+.week-goal-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
+.week-goal-pct { font-family: 'DM Serif Display', serif; font-size: 26px; color: var(--primary); }
+.week-goal-info { font-size: 11px; color: var(--text-muted); font-weight: 600; }
+
+/* PERFORMANCE */
+.perf-index-display { text-align: center; padding: 14px 0; }
+.perf-index-value { font-family: 'DM Serif Display', serif; font-size: 52px; line-height: 1; }
+.perf-index-label { font-size: 11px; color: var(--text-muted); font-weight: 700; margin-top: 3px; }
+.perf-breakdown { display: flex; flex-direction: column; gap: 9px; margin-top: 12px; }
+.perf-row { display: flex; align-items: center; gap: 8px; }
+.perf-row-label { font-size: 11px; font-weight: 700; color: var(--text-muted); width: 90px; flex-shrink: 0; }
+.perf-row-bar { flex: 1; background: var(--bg); border-radius: 50px; height: 8px; overflow: hidden; }
+.perf-row-fill { height: 100%; border-radius: 50px; }
+.perf-row-val { font-size: 11px; font-weight: 800; width: 34px; text-align: right; flex-shrink: 0; }
+
+/* REPORT */
+.report-block { background: var(--primary-light); border-radius: var(--radius-sm); padding: 14px; font-size: 13px; line-height: 1.9; color: var(--primary-dark); font-weight: 600; white-space: pre-line; border-left: 4px solid var(--primary); }
+
+/* KEYWORDS */
+.keyword-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 9px; }
+.keyword-chip { background: var(--accent-light); color: var(--accent); padding: 3px 9px; border-radius: 50px; font-size: 11px; font-weight: 700; }
+
+/* WARNING */
+.warning-box { background: #FFF8E1; border: 1px solid #FFD54F; border-radius: var(--radius-sm); padding: 11px 13px; display: flex; align-items: flex-start; gap: 7px; margin-bottom: 10px; font-size: 12px; font-weight: 600; color: #795548; }
+
+/* WEEK NAV */
+.week-nav { display: flex; align-items: center; justify-content: space-between; background: var(--primary-light); border-radius: var(--radius-sm); padding: 9px 13px; margin-bottom: 12px; }
+.week-nav-label { font-size: 12px; font-weight: 700; color: var(--primary-dark); }
+.week-nav button { background: none; border: none; cursor: pointer; color: var(--primary); font-size: 18px; padding: 2px 6px; border-radius: 6px; transition: background .2s; }
+.week-nav button:hover { background: rgba(74,124,89,.15); }
+
+/* MEMO STATS */
+.memo-stat-row { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+.memo-stat-row:last-child { border-bottom: none; }
+.memo-stat-label { font-weight: 600; color: var(--text-muted); }
+.memo-stat-value { font-weight: 800; color: var(--text); }
+
+/* MODAL */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 300; align-items: flex-end; justify-content: center; }
+.modal-overlay.show { display: flex; }
+.modal { background: var(--surface); border-radius: 24px 24px 0 0; padding: 18px 16px 30px; width: 100%; max-width: 480px; animation: slideUp .28s ease; max-height: 88vh; overflow-y: auto; }
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.modal-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 14px; }
+.modal-title { font-family: 'DM Serif Display', serif; font-size: 19px; color: var(--text); margin-bottom: 16px; }
+.modal-row { display: flex; align-items: center; gap: 9px; margin-bottom: 12px; }
+.modal-label { font-size: 11px; font-weight: 700; color: var(--text-muted); width: 55px; flex-shrink: 0; }
+.time-edit-inputs { display: flex; gap: 5px; align-items: center; }
+.time-edit-inputs input { width: 50px; padding: 8px 5px; border: 2px solid var(--border); border-radius: var(--radius-sm); font-family: 'DM Serif Display', serif; font-size: 19px; text-align: center; outline: none; background: var(--bg); transition: border .2s; }
+.time-edit-inputs input:focus { border-color: var(--primary); }
+.time-edit-inputs span { font-size: 17px; font-weight: 800; color: var(--text-muted); }
+.modal-select { flex: 1; padding: 9px 11px; border: 2px solid var(--border); border-radius: var(--radius-sm); font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 700; outline: none; background: var(--bg); transition: border .2s; }
+.modal-select:focus { border-color: var(--primary); }
+.modal-input { flex: 1; padding: 9px 11px; border: 2px solid var(--border); border-radius: var(--radius-sm); font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 600; outline: none; background: var(--bg); transition: border .2s; width: 100%; }
+.modal-input:focus { border-color: var(--primary); }
+.modal-actions { display: flex; gap: 7px; margin-top: 18px; }
+.modal-actions .btn { flex: 1; }
+
+/* EMPTY */
+.empty-state { text-align: center; padding: 24px 14px; color: var(--text-muted); font-size: 13px; font-weight: 600; }
+.empty-state .emoji { font-size: 30px; display: block; margin-bottom: 7px; }
+
+/* CARRYOVER */
+.carryover-count { display: inline-flex; align-items: center; justify-content: center; background: var(--accent); color: white; font-size: 10px; font-weight: 800; border-radius: 50px; padding: 2px 7px; margin-left: 5px; }
+
+select { cursor: pointer; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="app-header">
+  <div class="app-logo">StudyLog Pro</div>
+  <div class="date-nav">
+    <button onclick="changeDate(-1)">‹</button>
+    <span id="date-display" onclick="openDatePicker()">今日</span>
+    <button onclick="changeDate(1)">›</button>
+  </div>
+  <input type="date" id="date-picker-input" onchange="onDatePickerChange(this.value)">
+</header>
+
+<!-- TAB NAV -->
+<nav class="tab-nav">
+  <button class="tab-btn active" onclick="switchTab('timer',this)"><span class="ti">⏱</span>タイマー</button>
+  <button class="tab-btn" onclick="switchTab('records',this)"><span class="ti">📖</span>記録</button>
+  <button class="tab-btn" onclick="switchTab('tasks',this)"><span class="ti">✅</span>タスク</button>
+  <button class="tab-btn" onclick="switchTab('review',this)"><span class="ti">🧠</span>復習</button>
+  <button class="tab-btn" onclick="switchTab('graph',this)"><span class="ti">📊</span>グラフ</button>
+  <button class="tab-btn" onclick="switchTab('analysis',this)"><span class="ti">🔬</span>分析</button>
+  <button class="tab-btn" onclick="switchTab('subjects',this)"><span class="ti">📚</span>科目</button>
+</nav>
+
+<!-- TIMER TAB -->
+<div id="tab-timer" class="tab-content active">
+  <div class="card" id="timer-card">
+    <div class="timer-display">
+      <div class="timer-time" id="timer-display">00:00:00</div>
+      <div id="timer-type-indicator"></div>
+      <select class="timer-subject-select" id="timer-subject" onchange="updateTimerTypeBadge()">
+        <option value="">科目を選択</option>
+      </select>
+    </div>
+    <div class="timer-controls">
+      <button class="btn btn-primary" id="btn-start" onclick="timerStart()">開始</button>
+      <button class="btn btn-secondary" id="btn-pause" onclick="timerPause()" style="display:none">一時停止</button>
+      <button class="btn btn-danger" id="btn-reset" onclick="timerReset()" style="display:none">リセット</button>
+    </div>
+  </div>
+  <div class="card" id="week-goal-card">
+    <div class="card-title">今週の目標</div>
+    <div id="week-goal-content"></div>
+  </div>
+  <div id="timer-page-summary"></div>
+</div>
+
+<!-- RECORDS TAB -->
+<div id="tab-records" class="tab-content">
+  <div id="records-day-total"></div>
+  <div class="card">
+    <div class="card-title">記録一覧</div>
+    <div id="records-list"></div>
+  </div>
+</div>
+
+<!-- TASKS TAB -->
+<div id="tab-tasks" class="tab-content">
+  <div class="card">
+    <div class="card-title">タスク <span id="carryover-badge"></span></div>
+    <div id="tasks-list"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">タスクを追加</div>
+    <div class="task-add-form">
+      <select id="task-subject-sel"><option value="">科目を選択</option></select>
+      <input type="text" id="task-text-input" placeholder="タスク内容">
+      <input type="number" id="task-goal-input" placeholder="目標時間（分）" min="0">
+      <div>
+        <div class="card-title" style="margin-bottom:7px">重要度ランク</div>
+        <div class="rank-select-row">
+          <button class="rank-option sel-S" data-rank="S" onclick="selectRank(this)">S</button>
+          <button class="rank-option" data-rank="A" onclick="selectRank(this)">A</button>
+          <button class="rank-option" data-rank="B" onclick="selectRank(this)">B</button>
+          <button class="rank-option" data-rank="C" onclick="selectRank(this)">C</button>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="addTask()">追加する</button>
+    </div>
+  </div>
+</div>
+
+<!-- REVIEW TAB -->
+<div id="tab-review" class="tab-content">
+  <div class="card">
+    <div class="card-title">本日の復習 <span id="review-today-count"></span></div>
+    <div id="review-today-list"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">今後のスケジュール</div>
+    <div id="review-upcoming-list"></div>
+  </div>
+</div>
+
+<!-- GRAPH TAB -->
+<div id="tab-graph" class="tab-content">
+  <div class="week-nav">
+    <button onclick="changeGraphWeek(-1)">‹</button>
+    <span class="week-nav-label" id="graph-week-label"></span>
+    <button onclick="changeGraphWeek(1)">›</button>
+  </div>
+  <div class="stats-grid stats-grid-4" id="graph-stats"></div>
+  <div class="card">
+    <div class="card-title">日別学習時間</div>
+    <div class="chart-wrap"><canvas id="bar-chart"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-title">科目別比率</div>
+    <div class="chart-wrap"><canvas id="pie-chart"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-title">週合計・月平均推移</div>
+    <div class="chart-wrap-lg"><canvas id="line-chart"></canvas></div>
+  </div>
+</div>
+
+<!-- ANALYSIS TAB -->
+<div id="tab-analysis" class="tab-content">
+  <div id="analysis-warnings"></div>
+  <div class="card">
+    <div class="card-title">週パフォーマンス指数</div>
+    <div id="perf-index-content"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">週次レポート</div>
+    <div id="weekly-report-content"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">メモ分析</div>
+    <div id="memo-analysis-content"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">週目標設定</div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <input type="number" id="week-goal-input" placeholder="目標（時間）" min="1" max="168"
+        style="flex:1;padding:9px 12px;border:2px solid var(--border);border-radius:var(--radius-sm);font-family:Nunito;font-size:13px;font-weight:600;outline:none;background:var(--bg);transition:border .2s">
+      <button class="btn btn-primary btn-sm" onclick="saveWeekGoal()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- SUBJECTS TAB -->
+<div id="tab-subjects" class="tab-content">
+  <div class="card">
+    <div class="card-title">科目一覧</div>
+    <div class="subject-chips" id="subject-chips"></div>
+    <div class="add-subject-row">
+      <input type="text" id="new-subject-input" placeholder="新しい科目名" maxlength="20">
+      <select id="new-subject-type">
+        <option value="calculation">🔢計算</option>
+        <option value="memory">🧠暗記</option>
+      </select>
+      <button class="btn btn-primary btn-sm" onclick="addSubject()">追加</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Save Timer -->
+<div class="modal-overlay" id="save-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">記録を確認</div>
+    <div class="modal-row">
+      <div class="modal-label">時間</div>
+      <div class="time-edit-inputs">
+        <input type="number" id="edit-h" min="0" max="99">
+        <span>:</span>
+        <input type="number" id="edit-m" min="0" max="59">
+        <span>:</span>
+        <input type="number" id="edit-s" min="0" max="59">
+      </div>
+    </div>
+    <div class="modal-row">
+      <div class="modal-label">科目</div>
+      <select class="modal-select" id="modal-subject-sel"></select>
+    </div>
+    <div class="modal-row">
+      <div class="modal-label">メモ</div>
+      <input type="text" class="modal-input" id="modal-note" placeholder="メモ（任意）">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" id="btn-resume" onclick="timerResume()">再開</button>
+      <button class="btn btn-secondary" onclick="discardSave()">破棄</button>
+      <button class="btn btn-accent" onclick="confirmSave()">保存する</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Edit Record -->
+<div class="modal-overlay" id="edit-record-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">記録を編集</div>
+    <div class="modal-row">
+      <div class="modal-label">時間</div>
+      <div class="time-edit-inputs">
+        <input type="number" id="edit-rec-h" min="0" max="99">
+        <span>:</span>
+        <input type="number" id="edit-rec-m" min="0" max="59">
+        <span>:</span>
+        <input type="number" id="edit-rec-s" min="0" max="59">
+      </div>
+    </div>
+    <div class="modal-row">
+      <div class="modal-label">科目</div>
+      <select class="modal-select" id="edit-rec-subject"></select>
+    </div>
+    <div class="modal-row">
+      <div class="modal-label">メモ</div>
+      <input type="text" class="modal-input" id="edit-rec-note" placeholder="メモ（任意）">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-danger" onclick="deleteEditingRecord()" style="flex:0;padding:10px 13px">🗑</button>
+      <button class="btn btn-secondary" onclick="closeEditRecordModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveEditRecord()">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+/* =====================================================================
+   STORAGE MODULE
+===================================================================== */
+const Storage = {
+  get(key, def) { try { const v = localStorage.getItem(key); return v !== null ? JSON.parse(v) : def; } catch { return def; } },
+  set(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) { console.warn(e); } },
+};
+
+/* =====================================================================
+   DATA MODULE
+===================================================================== */
+const Data = {
+  getSubjects:          () => Storage.get('slp_subjects', [{id:'s1',name:'数学',type:'calculation'},{id:'s2',name:'英語',type:'memory'},{id:'s3',name:'国語',type:'memory'}]),
+  saveSubjects:        (v) => Storage.set('slp_subjects', v),
+  getRecords:           () => Storage.get('slp_records', []),
+  saveRecords:         (v) => Storage.set('slp_records', v),
+  getTasks:             () => Storage.get('slp_tasks', []),
+  saveTasks:           (v) => Storage.set('slp_tasks', v),
+  getReviews:           () => Storage.get('slp_reviews', []),
+  saveReviews:         (v) => Storage.set('slp_reviews', v),
+  getCompletedReviews:  () => Storage.get('slp_completed_reviews', []),
+  saveCompletedReviews:(v) => Storage.set('slp_completed_reviews', v),
+  getWeekGoal:          () => Storage.get('slp_week_goal', 20),
+  saveWeekGoal:        (v) => Storage.set('slp_week_goal', v),
+};
+
+/* =====================================================================
+   UTILS MODULE
+===================================================================== */
+const Utils = {
+  todayStr() { return this.dateToStr(new Date()); },
+  dateToStr(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; },
+  addDays(dateStr, n) { const d = new Date(dateStr+'T00:00:00'); d.setDate(d.getDate()+n); return this.dateToStr(d); },
+  formatTime(sec) { const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60; return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`; },
+  formatHours(sec) { return (sec/3600).toFixed(1)+'h'; },
+  esc(str) { return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); },
+  uid() { return Date.now().toString(36)+Math.random().toString(36).slice(2,5); },
+  formatDateDisplay(str) {
+    const d = new Date(str+'T00:00:00'), today = this.todayStr();
+    if (str === today) return '今日 '+d.toLocaleDateString('ja-JP',{month:'short',day:'numeric'});
+    if (str === this.addDays(today,-1)) return '昨日 '+d.toLocaleDateString('ja-JP',{month:'short',day:'numeric'});
+    return d.toLocaleDateString('ja-JP',{month:'short',day:'numeric',weekday:'short'});
+  },
+  getWeekStart(dateStr) {
+    const d = new Date(dateStr+'T00:00:00'), day = d.getDay();
+    d.setDate(d.getDate() + (day===0?-6:1-day));
+    return this.dateToStr(d);
+  },
+  getWeekDates(ws) { return Array.from({length:7},(_,i)=>this.addDays(ws,i)); },
+  rankLabel(n) { return {4:'S',3:'A',2:'B',1:'C'}[n]||'C'; },
+  rankNum(l) { return {S:4,A:3,B:2,C:1}[l]||1; },
+};
+
+/* =====================================================================
+   SUBJECTS MODULE
+===================================================================== */
+const Subjects = {
+  getByName(name) { return Data.getSubjects().find(s=>s.name===name); },
+  getType(name) { const s=this.getByName(name); return s?s.type:null; },
+  isMemory(name) { return this.getType(name)==='memory'; },
+};
+
+/* =====================================================================
+   REVIEWS MODULE (忘却曲線)
+===================================================================== */
+const REVIEW_INTERVALS = [1,3,7,14,30];
+
+const Reviews = {
+  create(subjectName, learnedDate) {
+    const reviews = Data.getReviews();
+    reviews.push({ id:Utils.uid(), subjectName, learnedDate, nextReviewDate:Utils.addDays(learnedDate, REVIEW_INTERVALS[0]), stage:0 });
+    Data.saveReviews(reviews);
+  },
+  complete(id) {
+    const reviews = Data.getReviews(), idx = reviews.findIndex(r=>r.id===id);
+    if (idx===-1) return;
+    const rev = reviews[idx], nextStage = rev.stage+1;
+    const completed = Data.getCompletedReviews();
+    completed.push({ id:Utils.uid(), reviewId:id, completedDate:Utils.todayStr() });
+    Data.saveCompletedReviews(completed);
+    if (nextStage >= REVIEW_INTERVALS.length) { reviews.splice(idx,1); }
+    else { rev.stage=nextStage; rev.nextReviewDate=Utils.addDays(Utils.todayStr(), REVIEW_INTERVALS[nextStage]); }
+    Data.saveReviews(reviews);
+    renderReview();
+  },
+  getToday() { const t=Utils.todayStr(); return Data.getReviews().filter(r=>r.nextReviewDate<=t); },
+  getUpcoming() { const t=Utils.todayStr(); return Data.getReviews().filter(r=>r.nextReviewDate>t).sort((a,b)=>a.nextReviewDate.localeCompare(b.nextReviewDate)); },
+};
+
+/* =====================================================================
+   CHARTS MODULE
+===================================================================== */
+const Charts = {
+  _i: {},
+  destroy(k) { if(this._i[k]){this._i[k].destroy();delete this._i[k];} },
+  create(k, canvasId, config) {
+    this.destroy(k);
+    const el = document.getElementById(canvasId);
+    if (!el) return null;
+    this._i[k] = new Chart(el.getContext('2d'), config);
+    return this._i[k];
+  },
+  axisFont() { return {family:'Nunito',size:11,weight:'700'}; },
+};
+
+/* =====================================================================
+   APP STATE
+===================================================================== */
+const App = {
+  currentDate: Utils.todayStr(),
+  graphWeekOffset: 0,
+  currentTab: 'timer',
+  timer: { interval:null, elapsed:0, running:false, paused:false },
+  selectedRank: 'S',
+  editingRecordId: null,
+};
+
+/* =====================================================================
+   TIMER MODULE
+===================================================================== */
+function timerStart() {
+  if (App.timer.running) return;
+  App.timer.running = true;
+  App.timer.paused = false;
+  App.timer.interval = setInterval(()=>{ App.timer.elapsed++; document.getElementById('timer-display').textContent = Utils.formatTime(App.timer.elapsed); }, 1000);
+  document.getElementById('timer-card').className = 'card timer-running';
+  document.getElementById('btn-start').style.display = 'none';
+  document.getElementById('btn-pause').style.display = '';
+  document.getElementById('btn-reset').style.display = '';
+}
+
+function timerPause() {
+  if (!App.timer.running) return;
+  clearInterval(App.timer.interval);
+  App.timer.running = false;
+  App.timer.paused = true;
+  document.getElementById('timer-card').className = 'card timer-paused';
+  openSaveModal();
+}
+
+function timerResume() {
+  App.timer.running = true;
+  App.timer.interval = setInterval(()=>{ App.timer.elapsed++; document.getElementById('timer-display').textContent = Utils.formatTime(App.timer.elapsed); }, 1000);
+  document.getElementById('timer-card').className = 'card timer-running';
+  document.getElementById('save-modal').classList.remove('show');
+}
+
+function timerReset() {
+  clearInterval(App.timer.interval);
+  App.timer = { interval:null, elapsed:0, running:false, paused:false };
+  document.getElementById('timer-display').textContent = '00:00:00';
+  document.getElementById('timer-card').className = 'card';
+  document.getElementById('btn-start').style.display = '';
+  document.getElementById('btn-pause').style.display = 'none';
+  document.getElementById('btn-reset').style.display = 'none';
+  document.getElementById('save-modal').classList.remove('show');
+}
+
+/* =====================================================================
+   SAVE MODAL
+===================================================================== */
+function openSaveModal() {
+  const sec = App.timer.elapsed;
+  document.getElementById('edit-h').value = Math.floor(sec/3600);
+  document.getElementById('edit-m').value = Math.floor((sec%3600)/60);
+  document.getElementById('edit-s').value = sec%60;
+  document.getElementById('modal-note').value = '';
+  populateSelect('modal-subject-sel', document.getElementById('timer-subject').value);
+  document.getElementById('save-modal').classList.add('show');
+}
+
+function discardSave() { timerReset(); }
+
+function confirmSave() {
+  const h=parseInt(document.getElementById('edit-h').value)||0;
+  const m=parseInt(document.getElementById('edit-m').value)||0;
+  const s=parseInt(document.getElementById('edit-s').value)||0;
+  const totalSec = h*3600+m*60+s;
+  if (totalSec<=0) { alert('0秒は記録できません'); return; }
+  const subjectName = document.getElementById('modal-subject-sel').value;
+  const note = document.getElementById('modal-note').value.trim();
+  const records = Data.getRecords();
+  records.push({ id:Utils.uid(), date:App.currentDate, subjectName, seconds:totalSec, note });
+  Data.saveRecords(records);
+  // 忘却曲線: 暗記科目なら自動スケジュール生成
+  if (Subjects.isMemory(subjectName)) Reviews.create(subjectName, App.currentDate);
+  timerReset();
+  renderTimerPage();
+}
+
+/* =====================================================================
+   RENDER: Timer Page
+===================================================================== */
+function renderTimerPage() {
+  populateSelect('timer-subject');
+  updateTimerTypeBadge();
+  renderWeekGoalCard();
+  const records = Data.getRecords().filter(r=>r.date===App.currentDate);
+  const total = records.reduce((a,r)=>a+r.seconds,0);
+  const el = document.getElementById('timer-page-summary');
+  if (!records.length) { el.innerHTML=''; return; }
+  const bySubject = {};
+  records.forEach(r=>{ const k=r.subjectName||'未選択'; bySubject[k]=(bySubject[k]||0)+r.seconds; });
+  const rows = Object.entries(bySubject).map(([s,sec])=>{
+    const type=Subjects.getType(s);
+    const dot=type?`<span class="record-type-dot dot-${type}"></span>`:'';
+    return `<div class="record-item">${dot}<span class="record-subject-badge">${Utils.esc(s)}</span><span class="record-time">${Utils.formatTime(sec)}</span></div>`;
+  }).join('');
+  el.innerHTML=`<div class="card"><div class="day-total"><div><div class="day-total-label">本日合計</div></div><div class="day-total-value">${Utils.formatTime(total)}</div></div><div class="card-title">科目別</div>${rows}</div>`;
+}
+
+function updateTimerTypeBadge() {
+  const name = document.getElementById('timer-subject').value;
+  const el = document.getElementById('timer-type-indicator');
+  const type = Subjects.getType(name);
+  if (!type) { el.innerHTML=''; return; }
+  el.innerHTML = type==='memory'
+    ? '<span class="timer-type-badge badge-memory">🧠 暗記科目</span>'
+    : '<span class="timer-type-badge badge-calculation">🔢 計算科目</span>';
+}
+
+function renderWeekGoalCard() {
+  const ws = Utils.getWeekStart(App.currentDate);
+  const dates = Utils.getWeekDates(ws);
+  const records = Data.getRecords();
+  const weekSec = dates.reduce((sum,d)=>sum+records.filter(r=>r.date===d).reduce((a,r)=>a+r.seconds,0),0);
+  const goalH = Data.getWeekGoal();
+  const goalSec = goalH*3600;
+  const pct = Math.min(100, goalSec>0 ? Math.round(weekSec/goalSec*100) : 0);
+  const remaining = Math.max(0, goalSec-weekSec);
+  document.getElementById('week-goal-content').innerHTML=`
+    <div class="week-goal-row"><div class="week-goal-pct">${pct}%</div><div class="week-goal-info">目標: ${goalH}h &nbsp;/&nbsp; 今週: ${Utils.formatHours(weekSec)}</div></div>
+    <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+    <div style="font-size:11px;color:var(--text-muted);font-weight:600;margin-top:3px">${remaining>0?'残り '+Utils.formatHours(remaining):'🎉 目標達成！'}</div>`;
+}
+
+/* =====================================================================
+   RENDER: Records
+===================================================================== */
+function renderRecords() {
+  const records = Data.getRecords().filter(r=>r.date===App.currentDate);
+  const total = records.reduce((a,r)=>a+r.seconds,0);
+  document.getElementById('records-day-total').innerHTML = total>0
+    ? `<div class="day-total"><div><div class="day-total-label">${Utils.formatDateDisplay(App.currentDate)} 合計</div></div><div class="day-total-value">${Utils.formatTime(total)}</div></div>` : '';
+  const listEl = document.getElementById('records-list');
+  if (!records.length) { listEl.innerHTML='<div class="empty-state"><span class="emoji">📝</span>この日の記録はありません</div>'; return; }
+  listEl.innerHTML = records.map(r=>{
+    const type=Subjects.getType(r.subjectName);
+    const dot=type?`<span class="record-type-dot dot-${type}"></span>`:'';
+    const noteHtml=r.note?`<span class="record-note" title="${Utils.esc(r.note)}">${Utils.esc(r.note)}</span>`:'';
+    return `<div class="record-item">${dot}<span class="record-subject-badge">${Utils.esc(r.subjectName||'未選択')}</span>${noteHtml}<span class="record-time">${Utils.formatTime(r.seconds)}</span><button class="icon-btn" onclick="openEditRecord('${r.id}')">✏️</button></div>`;
+  }).join('');
+}
+
+function openEditRecord(id) {
+  const rec=Data.getRecords().find(r=>r.id===id); if(!rec)return;
+  App.editingRecordId=id;
+  document.getElementById('edit-rec-h').value=Math.floor(rec.seconds/3600);
+  document.getElementById('edit-rec-m').value=Math.floor((rec.seconds%3600)/60);
+  document.getElementById('edit-rec-s').value=rec.seconds%60;
+  document.getElementById('edit-rec-note').value=rec.note||'';
+  populateSelect('edit-rec-subject',rec.subjectName);
+  document.getElementById('edit-record-modal').classList.add('show');
+}
+
+function closeEditRecordModal() { document.getElementById('edit-record-modal').classList.remove('show'); App.editingRecordId=null; }
+
+function saveEditRecord() {
+  if (!App.editingRecordId) return;
+  const h=parseInt(document.getElementById('edit-rec-h').value)||0;
+  const m=parseInt(document.getElementById('edit-rec-m').value)||0;
+  const s=parseInt(document.getElementById('edit-rec-s').value)||0;
+  const totalSec=h*3600+m*60+s;
+  if (totalSec<=0) { alert('0秒は記録できません'); return; }
+  const records=Data.getRecords(), idx=records.findIndex(r=>r.id===App.editingRecordId);
+  if (idx===-1) return;
+  records[idx].seconds=totalSec;
+  records[idx].subjectName=document.getElementById('edit-rec-subject').value;
+  records[idx].note=document.getElementById('edit-rec-note').value.trim();
+  Data.saveRecords(records);
+  closeEditRecordModal(); renderRecords();
+}
+
+function deleteEditingRecord() {
+  if (!App.editingRecordId) return;
+  if (!confirm('この記録を削除しますか？')) return;
+  Data.saveRecords(Data.getRecords().filter(r=>r.id!==App.editingRecordId));
+  closeEditRecordModal(); renderRecords();
+}
+
+/* =====================================================================
+   RENDER: Tasks
+===================================================================== */
+function selectRank(el) {
+  App.selectedRank = el.dataset.rank;
+  document.querySelectorAll('.rank-option').forEach(b=>{ b.className='rank-option'; });
+  el.classList.add('sel-'+App.selectedRank);
+}
+
+function renderTasks() {
+  populateSelect('task-subject-sel');
+  carryoverTasks();
+  const tasks = Data.getTasks().filter(t=>t.date===App.currentDate).sort((a,b)=>(b.rank||1)-(a.rank||1));
+  const cc = tasks.filter(t=>t.carryover).length;
+  document.getElementById('carryover-badge').innerHTML = cc>0?`<span class="carryover-count">${cc}件繰越</span>`:'';
+  const listEl = document.getElementById('tasks-list');
+  if (!tasks.length) { listEl.innerHTML='<div class="empty-state"><span class="emoji">✨</span>タスクはありません</div>'; return; }
+  listEl.innerHTML = tasks.map(t=>{
+    const rl=Utils.rankLabel(t.rank||1);
+    return `<div class="task-item">
+      <div class="task-rank-badge rank-${rl}">${rl}</div>
+      <div class="task-info">
+        <div class="task-subject">${Utils.esc(t.subjectName||'')}</div>
+        <div class="task-text">${Utils.esc(t.text)}</div>
+        ${t.goalMinutes?`<div class="task-goal">目標: ${t.goalMinutes}分</div>`:''}
+        ${t.carryover?'<div class="task-carryover">↩ 繰越</div>':''}
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="completeTask('${t.id}')">完了</button>
+    </div>`;
+  }).join('');
+}
+
+function carryoverTasks() {
+  const today=App.currentDate, tasks=Data.getTasks();
+  let changed=false;
+  const fromSet=new Set(tasks.filter(t=>t.carryoverFrom).map(t=>t.carryoverFrom+'|'+t.date));
+  tasks.forEach(t=>{
+    if (t.date<today && !t.completedDate && !fromSet.has(t.id+'|'+today)) {
+      tasks.push({...t, id:Utils.uid(), date:today, carryover:true, carryoverFrom:t.id});
+      t.completedDate='carried'; fromSet.add(t.id+'|'+today); changed=true;
+    }
+  });
+  if (changed) Data.saveTasks(tasks);
+}
+
+function addTask() {
+  const subjectName=document.getElementById('task-subject-sel').value;
+  const text=document.getElementById('task-text-input').value.trim();
+  const goalMinutes=parseInt(document.getElementById('task-goal-input').value)||0;
+  if (!text) { alert('タスク内容を入力してください'); return; }
+  const tasks=Data.getTasks();
+  tasks.push({ id:Utils.uid(), subjectName, text, goalMinutes, rank:Utils.rankNum(App.selectedRank), date:App.currentDate });
+  Data.saveTasks(tasks);
+  document.getElementById('task-text-input').value='';
+  document.getElementById('task-goal-input').value='';
+  renderTasks();
+}
+
+function completeTask(id) { Data.saveTasks(Data.getTasks().filter(t=>t.id!==id)); renderTasks(); }
+
+/* =====================================================================
+   RENDER: Review
+===================================================================== */
+function renderReview() {
+  const today=Reviews.getToday(), upcoming=Reviews.getUpcoming();
+  document.getElementById('review-today-count').innerHTML = today.length?`<span class="carryover-count">${today.length}件</span>`:'';
+  const tEl=document.getElementById('review-today-list');
+  tEl.innerHTML = !today.length
+    ? '<div class="empty-state"><span class="emoji">🎉</span>本日の復習はありません</div>'
+    : today.map(r=>`
+      <div class="review-item">
+        <div class="review-stage">第${r.stage+1}回</div>
+        <div class="review-info"><div class="review-subject">${Utils.esc(r.subjectName)}</div><div class="review-date">学習日: ${r.learnedDate}</div></div>
+        ${r.nextReviewDate<Utils.todayStr()?'<span class="review-overdue">遅延</span>':''}
+        <button class="btn btn-purple btn-sm" onclick="Reviews.complete('${r.id}')">完了</button>
+      </div>`).join('');
+  const uEl=document.getElementById('review-upcoming-list');
+  uEl.innerHTML = !upcoming.length
+    ? '<div class="empty-state"><span class="emoji">📅</span>今後の復習はありません</div>'
+    : upcoming.slice(0,10).map(r=>`
+      <div class="review-item">
+        <div class="review-stage">第${r.stage+1}回</div>
+        <div class="review-info"><div class="review-subject">${Utils.esc(r.subjectName)}</div><div class="review-date">復習日: ${r.nextReviewDate}</div></div>
+      </div>`).join('');
+}
+
+/* =====================================================================
+   RENDER: Graph
+===================================================================== */
+function getGraphWeekStart() {
+  const d=new Date(Utils.getWeekStart(App.currentDate)+'T00:00:00');
+  d.setDate(d.getDate()+App.graphWeekOffset*7);
+  return Utils.dateToStr(d);
+}
+
+function changeGraphWeek(delta) { App.graphWeekOffset+=delta; renderGraph(); }
+
+function renderGraph() {
+  const ws=getGraphWeekStart(), dates=Utils.getWeekDates(ws);
+  const we=dates[6];
+  const records=Data.getRecords();
+
+  // Label
+  const fmt=(s)=>new Date(s+'T00:00:00').toLocaleDateString('ja-JP',{month:'numeric',day:'numeric'});
+  document.getElementById('graph-week-label').textContent=`${fmt(ws)} 〜 ${fmt(we)}`;
+
+  // Bar data
+  const barData = dates.map(d=>{
+    const sec=records.filter(r=>r.date===d).reduce((a,r)=>a+r.seconds,0);
+    return +(sec/3600).toFixed(2);
+  });
+  const barLabels = dates.map(d=>fmt(d));
+  const weekTotal = barData.reduce((a,b)=>a+b,0);
+  const weekAvg = weekTotal/7;
+  const goalH = Data.getWeekGoal();
+  const goalPct = Math.min(100, goalH>0?Math.round(weekTotal/goalH*100):0);
+
+  // Stats
+  document.getElementById('graph-stats').innerHTML=`
+    <div class="stat-card"><div class="stat-label">週合計</div><div class="stat-value">${weekTotal.toFixed(1)}h</div></div>
+    <div class="stat-card"><div class="stat-label">日平均</div><div class="stat-value">${weekAvg.toFixed(1)}h</div></div>
+    <div class="stat-card"><div class="stat-label">目標達成率</div><div class="stat-value">${goalPct}%</div></div>
+    <div class="stat-card"><div class="stat-label">目標</div><div class="stat-value">${goalH}h</div></div>`;
+
+  // Bar chart
+  Charts.create('bar','bar-chart',{
+    type:'bar',
+    data:{ labels:barLabels, datasets:[{
+      data:barData,
+      backgroundColor:dates.map(d=>d===App.currentDate?'rgba(74,124,89,0.9)':'rgba(74,124,89,0.35)'),
+      borderRadius:8, borderSkipped:false
+    }]},
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+      scales:{ y:{beginAtZero:true, ticks:{stepSize:1,callback:v=>v+'h',font:Charts.axisFont(),color:'#888880'}, grid:{color:'#E8E5DE'}},
+               x:{ticks:{font:Charts.axisFont(),color:'#888880'}, grid:{display:false}} } }
+  });
+
+  // Pie chart
+  const bySubject={};
+  dates.forEach(d=>records.filter(r=>r.date===d).forEach(r=>{ const k=r.subjectName||'未選択'; bySubject[k]=(bySubject[k]||0)+r.seconds; }));
+  const pieLabels=Object.keys(bySubject);
+  const pieData=pieLabels.map(k=>+(bySubject[k]/3600).toFixed(2));
+  const pieColors=['#4A7C59','#7C5CBF','#3A7BD5','#E8824A','#E85A5A','#45B7A0','#F4A261','#9C27B0'];
+  Charts.create('pie','pie-chart',{
+    type:'doughnut',
+    data:{ labels:pieLabels, datasets:[{ data:pieData, backgroundColor:pieColors.slice(0,pieLabels.length), borderWidth:2, borderColor:'#fff' }]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{position:'bottom',labels:{font:Charts.axisFont(),padding:10}},
+                tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${ctx.raw}h`}} } }
+  });
+
+  // Line chart
+  renderLineChart(records);
+}
+
+function renderLineChart(records) {
+  const wkLabels=[],wkData=[];
+  const monthMap={};
+  for(let w=11;w>=0;w--) {
+    const d=new Date(Utils.getWeekStart(App.currentDate)+'T00:00:00');
+    d.setDate(d.getDate()-(w-App.graphWeekOffset)*7);
+    const ws=Utils.dateToStr(d), wd=Utils.getWeekDates(ws);
+    const total=wd.reduce((sum,date)=>sum+records.filter(r=>r.date===date).reduce((a,r)=>a+r.seconds,0),0);
+    const totalH=+(total/3600).toFixed(2);
+    wkLabels.push(new Date(ws+'T00:00:00').toLocaleDateString('ja-JP',{month:'numeric',day:'numeric'}));
+    wkData.push(totalH);
+    const mk=ws.slice(0,7); if(!monthMap[mk])monthMap[mk]=[]; monthMap[mk].push(totalH);
+  }
+  const mKeys=Object.keys(monthMap);
+  const mData=mKeys.map(k=>+(monthMap[k].reduce((a,b)=>a+b,0)/monthMap[k].length).toFixed(2));
+  const perWeek=Math.ceil(wkLabels.length/Math.max(mKeys.length,1));
+  const mPadded=wkLabels.map((_,i)=>mData[Math.min(Math.floor(i/perWeek),mData.length-1)]||0);
+
+  Charts.create('line','line-chart',{
+    type:'line',
+    data:{ labels:wkLabels, datasets:[
+      { label:'週合計', data:wkData, borderColor:'#4A7C59', backgroundColor:'rgba(74,124,89,0.08)', borderWidth:2.5, pointBackgroundColor:'#4A7C59', pointRadius:4, tension:.35, fill:true },
+      { label:'月平均', data:mPadded, borderColor:'#E8824A', backgroundColor:'transparent', borderWidth:2, borderDash:[6,4], pointRadius:0, tension:.35 }
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{legend:{position:'bottom',labels:{font:Charts.axisFont()}}},
+      scales:{
+        y:{beginAtZero:true, ticks:{callback:v=>v+'h',font:Charts.axisFont(),color:'#888880'}, grid:{color:'#E8E5DE'}},
+        x:{ticks:{font:{family:'Nunito',size:9,weight:'700'},color:'#888880',maxTicksLimit:6}, grid:{display:false}} } }
+  });
+}
+
+/* =====================================================================
+   RENDER: Analysis
+===================================================================== */
+function renderAnalysis() {
+  const ws=Utils.getWeekStart(App.currentDate), dates=Utils.getWeekDates(ws);
+  const allRecords=Data.getRecords(), weekRecords=allRecords.filter(r=>dates.includes(r.date));
+  const allTasks=Data.getTasks(), weekTasks=allTasks.filter(t=>dates.includes(t.date));
+  const weekSec=weekRecords.reduce((a,r)=>a+r.seconds,0);
+  const goalH=Data.getWeekGoal(), goalSec=goalH*3600;
+  const goalAchievePct=Math.min(1,goalSec>0?weekSec/goalSec:0);
+
+  // Type breakdown
+  let calcSec=0,memSec=0;
+  weekRecords.forEach(r=>{ const t=Subjects.getType(r.subjectName); if(t==='calculation')calcSec+=r.seconds; else if(t==='memory')memSec+=r.seconds; });
+  const totalTypeSec=calcSec+memSec;
+  const memPct=totalTypeSec>0?Math.round(memSec/totalTypeSec*100):0;
+
+  // Subject breakdown
+  const bySubject={};
+  weekRecords.forEach(r=>{ const k=r.subjectName||'未選択'; bySubject[k]=(bySubject[k]||0)+r.seconds; });
+
+  // S rank tasks
+  const sRankTasks=weekTasks.filter(t=>(t.rank||1)>=4);
+  const completedS=sRankTasks.filter(t=>t.completedDate&&t.completedDate!=='carried');
+  const sRankPct=sRankTasks.length>0?completedS.length/sRankTasks.length:1;
+
+  // Reviews
+  const scheduledReviews=Data.getReviews().filter(r=>dates.includes(r.nextReviewDate));
+  const completedReviews=Data.getCompletedReviews().filter(c=>dates.includes(c.completedDate));
+  const reviewPct=scheduledReviews.length>0?Math.min(1,completedReviews.length/scheduledReviews.length):1;
+
+  // Performance index
+  const taskRankAvg=weekTasks.length>0?weekTasks.reduce((a,t)=>a+(t.rank||1),0)/weekTasks.length:1;
+  const effortScore=Math.min(100,Math.round((weekSec/3600)*taskRankAvg*5));
+  const perfIndex=Math.round(goalAchievePct*40+reviewPct*30+sRankPct*30);
+
+  renderAnalysisWarnings(bySubject,calcSec,memSec);
+  renderPerfIndex(perfIndex,effortScore,goalAchievePct,reviewPct,sRankPct);
+  renderWeeklyReport(memPct,sRankPct,reviewPct,weekSec,goalH,goalAchievePct);
+  renderMemoAnalysis(weekRecords);
+  document.getElementById('week-goal-input').value=goalH;
+}
+
+function renderAnalysisWarnings(bySubject,calcSec,memSec) {
+  const el=document.getElementById('analysis-warnings');
+  const warns=[];
+  const totalT=calcSec+memSec;
+  if (totalT>0) {
+    const ratio=calcSec/totalT;
+    if (ratio<0.15) warns.push('計算科目が不足しています。計算系の学習を取り入れましょう。');
+    else if (ratio>0.85) warns.push('暗記科目が不足しています。暗記・語彙学習も取り入れましょう。');
+  }
+  const vals=Object.values(bySubject);
+  if (vals.length>=3) {
+    const avg=vals.reduce((a,b)=>a+b,0)/vals.length, maxV=Math.max(...vals);
+    if (avg>0&&maxV/avg>3) {
+      const top=Object.keys(bySubject).find(k=>bySubject[k]===maxV);
+      warns.push(`「${top}」への集中が高く、他科目が手薄です。学習を分散させましょう。`);
+    }
+  }
+  el.innerHTML=warns.map(w=>`<div class="warning-box"><span>⚠️</span><span>${Utils.esc(w)}</span></div>`).join('');
+}
+
+function renderPerfIndex(perf,effort,goalPct,reviewPct,sRankPct) {
+  const color=perf>=80?'#4A7C59':perf>=50?'#E8824A':'#C0392B';
+  document.getElementById('perf-index-content').innerHTML=`
+    <div class="perf-index-display">
+      <div class="perf-index-value" style="color:${color}">${perf}</div>
+      <div class="perf-index-label">週パフォーマンス指数（0〜100）</div>
+    </div>
+    <div class="perf-breakdown">
+      ${[
+        {label:'週目標達成率',val:Math.round(goalPct*100),color:'#4A7C59'},
+        {label:'復習達成率',val:Math.round(reviewPct*100),color:'#7C5CBF'},
+        {label:'Sランク達成率',val:Math.round(sRankPct*100),color:'#E8824A'},
+        {label:'努力度スコア',val:Math.min(100,effort),color:'#3A7BD5'},
+      ].map(({label,val,color})=>`
+        <div class="perf-row">
+          <div class="perf-row-label">${label}</div>
+          <div class="perf-row-bar"><div class="perf-row-fill" style="width:${val}%;background:${color}"></div></div>
+          <div class="perf-row-val" style="color:${color}">${val}%</div>
+        </div>`).join('')}
+    </div>`;
+}
+
+function renderWeeklyReport(memPct,sRankPct,reviewPct,weekSec,goalH,goalPct) {
+  const weekH=(weekSec/3600).toFixed(1), gA=Math.round(goalPct*100);
+  let r=`📅 今週の学習サマリー\n\n`;
+  r+=`今週は暗記科目が全体の ${memPct}% を占めています。\n`;
+  r+=`週合計学習時間は ${weekH}h で、目標達成率は ${gA}% です。\n`;
+  r+=`Sランクタスク達成率は ${Math.round(sRankPct*100)}% です。\n`;
+  r+=`復習消化率は ${Math.round(reviewPct*100)}% です。\n\n`;
+  if (gA>=100) r+=`✅ 今週の目標を達成しました！素晴らしい！\n`;
+  else if (gA>=70) r+=`📈 目標まであと少しです。ラストスパートを！\n`;
+  else r+=`💪 目標達成に向けてペースアップしていきましょう。\n`;
+  if (reviewPct<0.7) r+=`🧠 復習の消化が遅れ気味です。早めに取り組みましょう。\n`;
+  if (memPct>75) r+=`⚖️ 暗記に偏りがちです。計算系も取り入れてみましょう。\n`;
+  document.getElementById('weekly-report-content').innerHTML=`<div class="report-block">${Utils.esc(r)}</div>`;
+}
+
+function renderMemoAnalysis(weekRecords) {
+  const memos=weekRecords.filter(r=>r.note&&r.note.trim());
+  const rate=weekRecords.length>0?Math.round(memos.length/weekRecords.length*100):0;
+  const stop=new Set(['は','を','が','に','で','と','の','も','た','て','ない','する','いる','こと','これ','それ']);
+  const wc={};
+  memos.forEach(r=>r.note.split(/[\s、。　,\.\!\?！？]+/).forEach(w=>{ w=w.trim(); if(w.length>=2&&!stop.has(w)) wc[w]=(wc[w]||0)+1; }));
+  const top=Object.entries(wc).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const subM={};
+  memos.forEach(r=>{ const k=r.subjectName||'未選択'; subM[k]=(subM[k]||0)+1; });
+  document.getElementById('memo-analysis-content').innerHTML=`
+    <div class="memo-stat-row"><span class="memo-stat-label">メモ記入率</span><span class="memo-stat-value">${rate}%（${memos.length}/${weekRecords.length}件）</span></div>
+    ${Object.entries(subM).map(([s,n])=>`<div class="memo-stat-row"><span class="memo-stat-label">${Utils.esc(s)}</span><span class="memo-stat-value">${n}件</span></div>`).join('')}
+    ${top.length?`<div style="margin-top:10px"><div class="card-title" style="margin-bottom:7px">頻出キーワード</div><div class="keyword-chips">${top.map(([w,n])=>`<span class="keyword-chip">${Utils.esc(w)} (${n})</span>`).join('')}</div></div>`:''}`;
+}
+
+function saveWeekGoal() {
+  const v=parseInt(document.getElementById('week-goal-input').value)||20;
+  Data.saveWeekGoal(Math.max(1,Math.min(168,v)));
+  renderWeekGoalCard();
+  alert('週目標を保存しました');
+}
+
+/* =====================================================================
+   RENDER: Subjects
+===================================================================== */
+function renderSubjects() {
+  const subjects=Data.getSubjects();
+  const el=document.getElementById('subject-chips');
+  if (!subjects.length) { el.innerHTML='<div class="empty-state"><span class="emoji">📚</span>科目がありません</div>'; return; }
+  el.innerHTML=subjects.map(s=>{
+    const tl=s.type==='memory'?'🧠暗記':'🔢計算';
+    const tc=s.type==='memory'?'var(--purple)':'var(--blue)';
+    return `<div class="subject-chip"><span>${Utils.esc(s.name)}</span><span class="chip-type" style="color:${tc}">${tl}</span><span class="chip-del" onclick="deleteSubject('${s.id}')">×</span></div>`;
+  }).join('');
+}
+
+function addSubject() {
+  const inp=document.getElementById('new-subject-input');
+  const name=inp.value.trim(), type=document.getElementById('new-subject-type').value;
+  if (!name) return;
+  const subjects=Data.getSubjects();
+  if (subjects.find(s=>s.name===name)) { alert('すでに存在する科目です'); return; }
+  subjects.push({id:Utils.uid(),name,type});
+  Data.saveSubjects(subjects);
+  inp.value=''; renderSubjects(); refreshAllSelects();
+}
+
+function deleteSubject(id) {
+  const s=Data.getSubjects().find(x=>x.id===id); if(!s)return;
+  if (!confirm(`「${s.name}」を削除しますか？`)) return;
+  Data.saveSubjects(Data.getSubjects().filter(x=>x.id!==id));
+  renderSubjects(); refreshAllSelects();
+}
+
+/* =====================================================================
+   SELECT HELPERS
+===================================================================== */
+function populateSelect(id, selected='') {
+  const sel=document.getElementById(id); if(!sel)return;
+  const subjects=Data.getSubjects(), cur=selected||sel.value;
+  sel.innerHTML='<option value="">科目を選択</option>'+subjects.map(s=>`<option value="${Utils.esc(s.name)}"${s.name===cur?' selected':''}>${Utils.esc(s.name)}</option>`).join('');
+}
+
+function refreshAllSelects() {
+  ['timer-subject','task-subject-sel','modal-subject-sel','edit-rec-subject'].forEach(id=>populateSelect(id));
+}
+
+/* =====================================================================
+   DATE NAV
+===================================================================== */
+function changeDate(delta) {
+  App.currentDate=Utils.addDays(App.currentDate,delta);
+  document.getElementById('date-display').textContent=Utils.formatDateDisplay(App.currentDate);
+  renderCurrentTab();
+}
+
+function openDatePicker() {
+  const inp=document.getElementById('date-picker-input');
+  inp.value=App.currentDate; inp.style.pointerEvents='auto'; inp.click(); inp.style.pointerEvents='none';
+}
+
+function onDatePickerChange(val) {
+  if(!val)return;
+  App.currentDate=val;
+  document.getElementById('date-display').textContent=Utils.formatDateDisplay(val);
+  renderCurrentTab();
+}
+
+/* =====================================================================
+   TAB
+===================================================================== */
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el=>el.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  btn.classList.add('active');
+  App.currentTab=tab;
+  renderTab(tab);
+}
+
+function renderTab(tab) {
+  if (tab==='timer') renderTimerPage();
+  else if (tab==='records') renderRecords();
+  else if (tab==='tasks') renderTasks();
+  else if (tab==='review') renderReview();
+  else if (tab==='graph') renderGraph();
+  else if (tab==='analysis') renderAnalysis();
+  else if (tab==='subjects') renderSubjects();
+}
+
+function renderCurrentTab() { renderTab(App.currentTab); }
+
+/* =====================================================================
+   INIT
+===================================================================== */
+function init() {
+  document.getElementById('date-display').textContent=Utils.formatDateDisplay(App.currentDate);
+  refreshAllSelects();
+  renderTimerPage();
+  document.getElementById('edit-record-modal').addEventListener('click',function(e){if(e.target===this)closeEditRecordModal();});
+  document.getElementById('new-subject-input').addEventListener('keydown',e=>{if(e.key==='Enter')addSubject();});
+}
+
+init();
+</script>
+</body>
+</html>
