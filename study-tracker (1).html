@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>StudyLog</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F5F3EE;
+    --surface: #FFFFFF;
+    --surface2: #FAFAF8;
+    --primary: #4A7C59;
+    --primary-light: #E8F1EB;
+    --primary-dark: #2D5A3D;
+    --accent: #E8824A;
+    --accent-light: #FDF0E8;
+    --text: #2C2C2C;
+    --text-muted: #888880;
+    --border: #E8E5DE;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+    --radius: 16px;
+    --radius-sm: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: 80px;
+  }
+
+  /* Header */
+  .app-header {
+    background: var(--surface);
+    padding: 16px 20px 12px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .app-logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    color: var(--primary-dark);
+    letter-spacing: -0.5px;
+  }
+
+  .date-nav {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg);
+    border-radius: 50px;
+    padding: 4px 8px;
+  }
+
+  .date-nav button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--primary);
+    font-size: 16px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;align-items:center;justify-content:center;
+    transition: background 0.2s;
+  }
+  .date-nav button:hover { background: var(--primary-light); }
+
+  #date-display {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  #date-picker-input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+    top: 50px;
+    left: 50%;
+  }
+
+  /* Tab Nav */
+  .tab-nav {
+    background: var(--surface);
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 61px;
+    z-index: 99;
+  }
+
+  .tab-btn {
+    flex: 1;
+    padding: 12px 4px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: 'Nunito', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-muted);
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .tab-btn .tab-icon { font-size: 18px; }
+  .tab-btn.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+  }
+
+  /* Main Content */
+  .tab-content { display: none; padding: 20px 16px; }
+  .tab-content.active { display: block; }
+
+  /* Card */
+  .card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+  }
+
+  .card-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 16px;
+  }
+
+  /* Timer */
+  .timer-display {
+    text-align: center;
+    padding: 24px 0 20px;
+  }
+
+  .timer-time {
+    font-family: 'DM Serif Display', serif;
+    font-size: 72px;
+    color: var(--text);
+    letter-spacing: -2px;
+    line-height: 1;
+  }
+
+  .timer-subject-select {
+    margin: 16px auto 0;
+    display: block;
+    width: 100%;
+    max-width: 260px;
+    padding: 10px 16px;
+    border: 2px solid var(--border);
+    border-radius: 50px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    background: var(--bg);
+    cursor: pointer;
+    text-align: center;
+  }
+
+  .timer-controls {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 20px;
+  }
+
+  .btn {
+    padding: 12px 28px;
+    border: none;
+    border-radius: 50px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+  }
+
+  .btn:active { transform: scale(0.96); }
+
+  .btn-primary {
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 4px 16px rgba(74,124,89,0.4);
+  }
+  .btn-primary:hover { background: var(--primary-dark); }
+
+  .btn-danger {
+    background: #FDE8E8;
+    color: #C0392B;
+  }
+
+  .btn-secondary {
+    background: var(--bg);
+    color: var(--text);
+    border: 2px solid var(--border);
+  }
+
+  .btn-accent {
+    background: var(--accent);
+    color: white;
+    box-shadow: 0 4px 16px rgba(232,130,74,0.35);
+  }
+
+  .btn-sm {
+    padding: 6px 14px;
+    font-size: 12px;
+  }
+
+  /* Subject chips */
+  .subject-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+
+  .subject-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 50px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    border: 2px solid var(--border);
+    background: var(--bg);
+    transition: all 0.2s;
+  }
+  .subject-chip:hover { border-color: var(--primary); }
+  .subject-chip .chip-del {
+    color: var(--text-muted);
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    margin-left: 2px;
+  }
+  .subject-chip .chip-del:hover { color: #C0392B; }
+
+  .add-subject-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .add-subject-row input {
+    flex: 1;
+    padding: 10px 14px;
+    border: 2px solid var(--border);
+    border-radius: 50px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    outline: none;
+    background: var(--bg);
+    transition: border 0.2s;
+  }
+  .add-subject-row input:focus { border-color: var(--primary); }
+
+  /* Records */
+  .record-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .record-item:last-child { border-bottom: none; }
+
+  .record-subject-badge {
+    background: var(--primary-light);
+    color: var(--primary-dark);
+    padding: 4px 10px;
+    border-radius: 50px;
+    font-size: 12px;
+    font-weight: 800;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .record-time {
+    font-family: 'DM Serif Display', serif;
+    font-size: 18px;
+    color: var(--text);
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+
+  .record-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px;
+    border-radius: 6px;
+    transition: background 0.2s;
+    line-height: 1;
+  }
+  .icon-btn:hover { background: var(--bg); }
+
+  /* Day total */
+  .day-total {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--primary-light);
+    border-radius: var(--radius-sm);
+    padding: 14px 18px;
+    margin-bottom: 16px;
+  }
+  .day-total-label { font-size: 13px; font-weight: 700; color: var(--primary-dark); }
+  .day-total-value {
+    font-family: 'DM Serif Display', serif;
+    font-size: 26px;
+    color: var(--primary-dark);
+  }
+
+  /* Task */
+  .task-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .task-item:last-child { border-bottom: none; }
+
+  .task-info { flex: 1; min-width: 0; }
+  .task-subject { font-size: 11px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; }
+  .task-text { font-size: 14px; font-weight: 600; color: var(--text); margin-top: 2px; word-break: break-word; }
+  .task-goal { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .task-carryover { font-size: 11px; color: var(--accent); font-weight: 700; }
+
+  .task-add-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .task-add-form input,
+  .task-add-form select {
+    padding: 10px 14px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: 'Nunito', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    outline: none;
+    background: var(--bg);
+    transition: border 0.2s;
+  }
+  .task-add-form input:focus,
+  .task-add-form select:focus { border-color: var(--primary); }
+
+  /* Chart */
+  .chart-wrap { position: relative; height: 220px; }
+
+  /* Modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 200;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 0;
+  }
+  .modal-overlay.show { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border-radius: 24px 24px 0 0;
+    padding: 24px 20px 32px;
+    width: 100%;
+    max-width: 480px;
+    animation: slideUp 0.3s ease;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+
+  .modal-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    color: var(--text);
+    margin-bottom: 20px;
+  }
+
+  .modal-handle {
+    width: 40px;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 0 auto 20px;
+  }
+
+  .modal-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .modal-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-muted);
+    width: 60px;
+    flex-shrink: 0;
+  }
+
+  .time-edit-inputs {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .time-edit-inputs input {
+    width: 56px;
+    padding: 10px 8px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    text-align: center;
+    outline: none;
+    background: var(--bg);
+    transition: border 0.2s;
+  }
+  .time-edit-inputs input:focus { border-color: var(--primary); }
+  .time-edit-inputs span { font-size: 20px; font-weight: 800; color: var(--text-muted); }
+
+  .modal-select {
+    flex: 1;
+    padding: 10px 14px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: 'Nunito', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    outline: none;
+    background: var(--bg);
+    transition: border 0.2s;
+  }
+  .modal-select:focus { border-color: var(--primary); }
+
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 24px;
+  }
+  .modal-actions .btn { flex: 1; }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 32px 16px;
+    color: var(--text-muted);
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .empty-state .emoji { font-size: 36px; display: block; margin-bottom: 8px; }
+
+  /* Bottom nav safe area */
+  .bottom-safe { height: env(safe-area-inset-bottom, 0); }
+
+  /* Stats strip */
+  .stats-strip {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    box-shadow: var(--shadow);
+  }
+  .stat-label { font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-value { font-family: 'DM Serif Display', serif; font-size: 24px; color: var(--text); margin-top: 2px; }
+
+  /* Timer running state */
+  .timer-running .timer-time { color: var(--primary); }
+  .timer-paused .timer-time { color: var(--accent); }
+
+  /* Scrollable chip area */
+  select { cursor: pointer; }
+
+  /* Carryover badge */
+  .carryover-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent);
+    color: white;
+    font-size: 10px;
+    font-weight: 800;
+    border-radius: 50px;
+    padding: 2px 7px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="app-logo">StudyLog</div>
+  <div class="date-nav">
+    <button onclick="changeDate(-1)" title="前日">‹</button>
+    <span id="date-display" onclick="openDatePicker()">今日</span>
+    <button onclick="changeDate(1)" title="翌日">›</button>
+  </div>
+  <input type="date" id="date-picker-input" onchange="onDatePickerChange(this.value)">
+</header>
+
+<nav class="tab-nav">
+  <button class="tab-btn active" onclick="switchTab('timer',this)">
+    <span class="tab-icon">⏱</span>タイマー
+  </button>
+  <button class="tab-btn" onclick="switchTab('records',this)">
+    <span class="tab-icon">📖</span>記録
+  </button>
+  <button class="tab-btn" onclick="switchTab('tasks',this)">
+    <span class="tab-icon">✅</span>タスク
+  </button>
+  <button class="tab-btn" onclick="switchTab('graph',this)">
+    <span class="tab-icon">📊</span>グラフ
+  </button>
+  <button class="tab-btn" onclick="switchTab('subjects',this)">
+    <span class="tab-icon">📚</span>科目
+  </button>
+</nav>
+
+<!-- TIMER TAB -->
+<div id="tab-timer" class="tab-content active">
+  <div class="card" id="timer-card">
+    <div class="timer-display">
+      <div class="timer-time" id="timer-display">00:00:00</div>
+      <select class="timer-subject-select" id="timer-subject">
+        <option value="">科目を選択</option>
+      </select>
+    </div>
+    <div class="timer-controls">
+      <button class="btn btn-primary" id="timer-start-btn" onclick="timerStart()">開始</button>
+      <button class="btn btn-secondary" id="timer-pause-btn" onclick="timerPause()" style="display:none">一時停止</button>
+      <button class="btn btn-danger" id="timer-reset-btn" onclick="timerReset()" style="display:none">リセット</button>
+    </div>
+  </div>
+
+  <!-- Today summary on timer page -->
+  <div id="timer-page-summary"></div>
+</div>
+
+<!-- RECORDS TAB -->
+<div id="tab-records" class="tab-content">
+  <div id="records-day-total"></div>
+  <div class="card">
+    <div class="card-title">記録一覧</div>
+    <div id="records-list"></div>
+  </div>
+</div>
+
+<!-- TASKS TAB -->
+<div id="tab-tasks" class="tab-content">
+  <div class="card">
+    <div class="card-title">タスク <span id="carryover-badge"></span></div>
+    <div id="tasks-list"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">タスクを追加</div>
+    <div class="task-add-form">
+      <select id="task-subject-sel">
+        <option value="">科目を選択</option>
+      </select>
+      <input type="text" id="task-text-input" placeholder="タスク内容">
+      <input type="number" id="task-goal-input" placeholder="目標時間（分）" min="0">
+      <button class="btn btn-primary" onclick="addTask()">追加する</button>
+    </div>
+  </div>
+</div>
+
+<!-- GRAPH TAB -->
+<div id="tab-graph" class="tab-content">
+  <div class="stats-strip" id="graph-stats"></div>
+  <div class="card">
+    <div class="card-title">過去7日間の学習時間</div>
+    <div class="chart-wrap">
+      <canvas id="study-chart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- SUBJECTS TAB -->
+<div id="tab-subjects" class="tab-content">
+  <div class="card">
+    <div class="card-title">科目一覧</div>
+    <div class="subject-chips" id="subject-chips"></div>
+    <div class="add-subject-row">
+      <input type="text" id="new-subject-input" placeholder="新しい科目名" maxlength="20">
+      <button class="btn btn-primary btn-sm" onclick="addSubject()">追加</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Save Modal -->
+<div class="modal-overlay" id="save-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">記録を確認</div>
+    <div class="modal-row">
+      <div class="modal-label">時間</div>
+      <div class="time-edit-inputs">
+        <input type="number" id="edit-h" min="0" max="99">
+        <span>:</span>
+        <input type="number" id="edit-m" min="0" max="59">
+        <span>:</span>
+        <input type="number" id="edit-s" min="0" max="59">
+      </div>
+    </div>
+    <div class="modal-row">
+      <div class="modal-label">科目</div>
+      <select class="modal-select" id="modal-subject-sel">
+        <option value="">選択なし</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="discardSave()">破棄</button>
+      <button class="btn btn-accent" onclick="confirmSave()">保存する</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Record Modal -->
+<div class="modal-overlay" id="edit-record-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">記録を編集</div>
+    <div class="modal-row">
+      <div class="modal-label">時間</div>
+      <div class="time-edit-inputs">
+        <input type="number" id="edit-rec-h" min="0" max="99">
+        <span>:</span>
+        <input type="number" id="edit-rec-m" min="0" max="59">
+        <span>:</span>
+        <input type="number" id="edit-rec-s" min="0" max="59">
+      </div>
+    </div>
+    <div class="modal-row">
+      <div class="modal-label">科目</div>
+      <select class="modal-select" id="edit-rec-subject">
+        <option value="">選択なし</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-danger btn-sm" onclick="deleteEditingRecord()" style="flex:0;padding:12px 16px">🗑</button>
+      <button class="btn btn-secondary" onclick="closeEditRecordModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveEditRecord()">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== STATE =====
+const state = {
+  currentDate: todayStr(),
+  timerInterval: null,
+  timerElapsed: 0, // seconds
+  timerRunning: false,
+  timerPaused: false,
+  editingRecordId: null,
+  chartInstance: null,
+};
+
+// ===== STORAGE =====
+function load(key, def) {
+  try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : def; } catch { return def; }
+}
+function save(key, val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
+}
+
+function getSubjects() { return load('sl_subjects', ['数学', '英語', '国語']); }
+function saveSubjects(s) { save('sl_subjects', s); }
+
+function getRecords() { return load('sl_records', []); }
+function saveRecords(r) { save('sl_records', r); }
+
+function getTasks() { return load('sl_tasks', []); }
+function saveTasks(t) { save('sl_tasks', t); }
+
+// ===== DATE =====
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function formatDateDisplay(str) {
+  const d = new Date(str + 'T00:00:00');
+  const today = todayStr();
+  if (str === today) return '今日 ' + d.toLocaleDateString('ja-JP', {month:'short', day:'numeric'});
+  const yesterday = new Date(Date.now() - 86400000);
+  const yStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth()+1).padStart(2,'0')}-${String(yesterday.getDate()).padStart(2,'0')}`;
+  if (str === yStr) return '昨日 ' + d.toLocaleDateString('ja-JP', {month:'short', day:'numeric'});
+  return d.toLocaleDateString('ja-JP', {month:'short', day:'numeric', weekday:'short'});
+}
+
+function changeDate(delta) {
+  const d = new Date(state.currentDate + 'T00:00:00');
+  d.setDate(d.getDate() + delta);
+  state.currentDate = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  document.getElementById('date-display').textContent = formatDateDisplay(state.currentDate);
+  renderCurrentTab();
+}
+
+function openDatePicker() {
+  const inp = document.getElementById('date-picker-input');
+  inp.value = state.currentDate;
+  inp.style.pointerEvents = 'auto';
+  inp.click();
+  inp.style.pointerEvents = 'none';
+}
+
+function onDatePickerChange(val) {
+  if (!val) return;
+  state.currentDate = val;
+  document.getElementById('date-display').textContent = formatDateDisplay(state.currentDate);
+  renderCurrentTab();
+}
+
+// ===== TABS =====
+let currentTab = 'timer';
+
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  btn.classList.add('active');
+  currentTab = tab;
+  renderTab(tab);
+}
+
+function renderCurrentTab() {
+  renderTab(currentTab);
+}
+
+function renderTab(tab) {
+  if (tab === 'timer') renderTimerPage();
+  else if (tab === 'records') renderRecords();
+  else if (tab === 'tasks') renderTasks();
+  else if (tab === 'graph') renderGraph();
+  else if (tab === 'subjects') renderSubjects();
+}
+
+// ===== TIMER =====
+function formatTime(sec) {
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = sec % 60;
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+function timerTick() {
+  state.timerElapsed++;
+  document.getElementById('timer-display').textContent = formatTime(state.timerElapsed);
+}
+
+function timerStart() {
+  if (state.timerRunning) return;
+  state.timerRunning = true;
+  state.timerPaused = false;
+  state.timerInterval = setInterval(timerTick, 1000);
+  document.getElementById('timer-card').className = 'card timer-running';
+  document.getElementById('timer-start-btn').style.display = 'none';
+  document.getElementById('timer-pause-btn').style.display = '';
+  document.getElementById('timer-reset-btn').style.display = '';
+}
+
+function timerPause() {
+  if (!state.timerRunning) return;
+  clearInterval(state.timerInterval);
+  state.timerRunning = false;
+  state.timerPaused = true;
+  document.getElementById('timer-card').className = 'card timer-paused';
+  document.getElementById('timer-pause-btn').textContent = '再開';
+  document.getElementById('timer-pause-btn').onclick = timerResume;
+  // Show confirm modal
+  openSaveModal();
+}
+
+function timerResume() {
+  state.timerInterval = setInterval(timerTick, 1000);
+  state.timerRunning = true;
+  state.timerPaused = false;
+  document.getElementById('timer-card').className = 'card timer-running';
+  document.getElementById('timer-pause-btn').textContent = '一時停止';
+  document.getElementById('timer-pause-btn').onclick = timerPause;
+  closeSaveModal();
+}
+
+function timerReset() {
+  clearInterval(state.timerInterval);
+  state.timerRunning = false;
+  state.timerPaused = false;
+  state.timerElapsed = 0;
+  document.getElementById('timer-display').textContent = '00:00:00';
+  document.getElementById('timer-card').className = 'card';
+  document.getElementById('timer-start-btn').style.display = '';
+  document.getElementById('timer-pause-btn').style.display = 'none';
+  document.getElementById('timer-pause-btn').textContent = '一時停止';
+  document.getElementById('timer-pause-btn').onclick = timerPause;
+  document.getElementById('timer-reset-btn').style.display = 'none';
+  closeSaveModal();
+}
+
+function openSaveModal() {
+  const sec = state.timerElapsed;
+  document.getElementById('edit-h').value = Math.floor(sec / 3600);
+  document.getElementById('edit-m').value = Math.floor((sec % 3600) / 60);
+  document.getElementById('edit-s').value = sec % 60;
+  // Populate subject select
+  populateSelect('modal-subject-sel', document.getElementById('timer-subject').value);
+  document.getElementById('save-modal').classList.add('show');
+}
+
+function closeSaveModal() {
+  document.getElementById('save-modal').classList.remove('show');
+}
+
+function discardSave() {
+  timerReset();
+}
+
+function confirmSave() {
+  const h = parseInt(document.getElementById('edit-h').value) || 0;
+  const m = parseInt(document.getElementById('edit-m').value) || 0;
+  const s = parseInt(document.getElementById('edit-s').value) || 0;
+  const totalSec = h * 3600 + m * 60 + s;
+  if (totalSec <= 0) { alert('0秒は記録できません'); return; }
+  const subject = document.getElementById('modal-subject-sel').value;
+  const records = getRecords();
+  records.push({
+    id: Date.now().toString(),
+    date: state.currentDate,
+    subject: subject,
+    seconds: totalSec,
+  });
+  saveRecords(records);
+  timerReset();
+  renderTimerPage();
+}
+
+function renderTimerPage() {
+  // Populate timer subject select
+  populateSelect('timer-subject');
+  // Summary
+  const records = getRecords().filter(r => r.date === state.currentDate);
+  const total = records.reduce((a, r) => a + r.seconds, 0);
+  const el = document.getElementById('timer-page-summary');
+  if (records.length === 0) { el.innerHTML = ''; return; }
+  const bySubject = {};
+  records.forEach(r => { bySubject[r.subject] = (bySubject[r.subject] || 0) + r.seconds; });
+  let rows = Object.entries(bySubject).map(([s, sec]) =>
+    `<div class="record-item"><span class="record-subject-badge">${s || '未選択'}</span><span class="record-time">${formatTime(sec)}</span></div>`
+  ).join('');
+  el.innerHTML = `<div class="card"><div class="day-total"><div><div class="day-total-label">本日合計</div></div><div class="day-total-value">${formatTime(total)}</div></div><div class="card-title">科目別</div>${rows}</div>`;
+}
+
+// ===== RECORDS =====
+function renderRecords() {
+  const records = getRecords().filter(r => r.date === state.currentDate);
+  const total = records.reduce((a, r) => a + r.seconds, 0);
+  // Total
+  const totalEl = document.getElementById('records-day-total');
+  if (total > 0) {
+    totalEl.innerHTML = `<div class="day-total"><div><div class="day-total-label">${formatDateDisplay(state.currentDate)} 合計</div></div><div class="day-total-value">${formatTime(total)}</div></div>`;
+  } else {
+    totalEl.innerHTML = '';
+  }
+  // List
+  const listEl = document.getElementById('records-list');
+  if (records.length === 0) {
+    listEl.innerHTML = '<div class="empty-state"><span class="emoji">📝</span>この日の記録はありません</div>';
+    return;
+  }
+  listEl.innerHTML = records.map(r => `
+    <div class="record-item">
+      <span class="record-subject-badge">${r.subject || '未選択'}</span>
+      <span class="record-time">${formatTime(r.seconds)}</span>
+      <div class="record-actions">
+        <button class="icon-btn" onclick="openEditRecord('${r.id}')" title="編集">✏️</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openEditRecord(id) {
+  const records = getRecords();
+  const rec = records.find(r => r.id === id);
+  if (!rec) return;
+  state.editingRecordId = id;
+  document.getElementById('edit-rec-h').value = Math.floor(rec.seconds / 3600);
+  document.getElementById('edit-rec-m').value = Math.floor((rec.seconds % 3600) / 60);
+  document.getElementById('edit-rec-s').value = rec.seconds % 60;
+  populateSelect('edit-rec-subject', rec.subject);
+  document.getElementById('edit-record-modal').classList.add('show');
+}
+
+function closeEditRecordModal() {
+  document.getElementById('edit-record-modal').classList.remove('show');
+  state.editingRecordId = null;
+}
+
+function saveEditRecord() {
+  if (!state.editingRecordId) return;
+  const h = parseInt(document.getElementById('edit-rec-h').value) || 0;
+  const m = parseInt(document.getElementById('edit-rec-m').value) || 0;
+  const s = parseInt(document.getElementById('edit-rec-s').value) || 0;
+  const totalSec = h * 3600 + m * 60 + s;
+  if (totalSec <= 0) { alert('0秒は記録できません'); return; }
+  const subject = document.getElementById('edit-rec-subject').value;
+  const records = getRecords();
+  const idx = records.findIndex(r => r.id === state.editingRecordId);
+  if (idx === -1) return;
+  records[idx].seconds = totalSec;
+  records[idx].subject = subject;
+  saveRecords(records);
+  closeEditRecordModal();
+  renderRecords();
+}
+
+function deleteEditingRecord() {
+  if (!state.editingRecordId) return;
+  if (!confirm('この記録を削除しますか？')) return;
+  const records = getRecords().filter(r => r.id !== state.editingRecordId);
+  saveRecords(records);
+  closeEditRecordModal();
+  renderRecords();
+}
+
+// ===== TASKS =====
+function renderTasks() {
+  populateSelect('task-subject-sel');
+  carryoverTasks();
+  const tasks = getTasks().filter(t => t.date === state.currentDate);
+  const listEl = document.getElementById('tasks-list');
+  const carryoverCount = tasks.filter(t => t.carryover).length;
+  const badge = document.getElementById('carryover-badge');
+  badge.innerHTML = carryoverCount > 0 ? `<span class="carryover-count">${carryoverCount}件繰越</span>` : '';
+
+  if (tasks.length === 0) {
+    listEl.innerHTML = '<div class="empty-state"><span class="emoji">✨</span>タスクはありません</div>';
+    return;
+  }
+  listEl.innerHTML = tasks.map(t => `
+    <div class="task-item">
+      <div class="task-info">
+        <div class="task-subject">${t.subject || '未選択'}</div>
+        <div class="task-text">${escHtml(t.text)}</div>
+        ${t.goal ? `<div class="task-goal">目標: ${t.goal}分</div>` : ''}
+        ${t.carryover ? `<div class="task-carryover">↩ 繰越</div>` : ''}
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="completeTask('${t.id}')">完了</button>
+    </div>
+  `).join('');
+}
+
+function carryoverTasks() {
+  const today = state.currentDate;
+  const tasks = getTasks();
+  let changed = false;
+  tasks.forEach(t => {
+    if (t.date < today && !t.completedDate) {
+      // Carry to current date if not already there
+      const existing = tasks.find(x => x.originalId === t.id && x.date === today);
+      if (!existing) {
+        // Check if already carried over as a copy
+        const alreadyCopied = tasks.find(x => x.carryoverFrom === t.id && x.date === today);
+        if (!alreadyCopied) {
+          tasks.push({
+            ...t,
+            id: Date.now().toString() + Math.random(),
+            date: today,
+            carryover: true,
+            carryoverFrom: t.id,
+          });
+          // Mark original as processed
+          t.completedDate = 'carried';
+          changed = true;
+        }
+      }
+    }
+  });
+  if (changed) saveTasks(tasks);
+}
+
+function addTask() {
+  const subject = document.getElementById('task-subject-sel').value;
+  const text = document.getElementById('task-text-input').value.trim();
+  const goal = parseInt(document.getElementById('task-goal-input').value) || 0;
+  if (!text) { alert('タスク内容を入力してください'); return; }
+  const tasks = getTasks();
+  tasks.push({
+    id: Date.now().toString(),
+    subject,
+    text,
+    goal,
+    date: state.currentDate,
+  });
+  saveTasks(tasks);
+  document.getElementById('task-text-input').value = '';
+  document.getElementById('task-goal-input').value = '';
+  renderTasks();
+}
+
+function completeTask(id) {
+  const tasks = getTasks().filter(t => t.id !== id);
+  saveTasks(tasks);
+  renderTasks();
+}
+
+// ===== GRAPH =====
+function renderGraph() {
+  // Compute last 7 days
+  const labels = [];
+  const data = [];
+  const records = getRecords();
+  const base = new Date(state.currentDate + 'T00:00:00');
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(base);
+    d.setDate(d.getDate() - i);
+    const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    labels.push(d.toLocaleDateString('ja-JP', {month:'numeric', day:'numeric'}));
+    const dayTotal = records.filter(r => r.date === ds).reduce((a, r) => a + r.seconds, 0);
+    data.push(+(dayTotal / 3600).toFixed(2));
+  }
+
+  // Stats
+  const weekTotal = data.reduce((a, b) => a + b, 0);
+  const avg = weekTotal / 7;
+  const statsEl = document.getElementById('graph-stats');
+  statsEl.innerHTML = `
+    <div class="stat-card"><div class="stat-label">週合計</div><div class="stat-value">${weekTotal.toFixed(1)}h</div></div>
+    <div class="stat-card"><div class="stat-label">日平均</div><div class="stat-value">${avg.toFixed(1)}h</div></div>
+  `;
+
+  // Chart
+  if (state.chartInstance) {
+    state.chartInstance.destroy();
+    state.chartInstance = null;
+  }
+  const ctx = document.getElementById('study-chart').getContext('2d');
+  const maxVal = Math.max(...data, 1);
+  const yMax = Math.ceil(maxVal) + 1;
+
+  state.chartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data,
+        backgroundColor: data.map((_, i) => i === 6 ? 'rgba(74,124,89,0.9)' : 'rgba(74,124,89,0.35)'),
+        borderRadius: 8,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: {
+          beginAtZero: true,
+          max: yMax,
+          ticks: {
+            stepSize: 1,
+            callback: v => v + 'h',
+            font: { family: 'Nunito', size: 11, weight: '700' },
+            color: '#888880',
+          },
+          grid: { color: '#E8E5DE' },
+        },
+        x: {
+          ticks: {
+            font: { family: 'Nunito', size: 11, weight: '700' },
+            color: '#888880',
+          },
+          grid: { display: false },
+        }
+      }
+    }
+  });
+}
+
+// ===== SUBJECTS =====
+function renderSubjects() {
+  const subjects = getSubjects();
+  const el = document.getElementById('subject-chips');
+  if (subjects.length === 0) {
+    el.innerHTML = '<div class="empty-state"><span class="emoji">📚</span>科目がありません</div>';
+    return;
+  }
+  el.innerHTML = subjects.map(s => `
+    <div class="subject-chip">
+      ${escHtml(s)}
+      <span class="chip-del" onclick="deleteSubject('${escHtml(s)}')" title="削除">×</span>
+    </div>
+  `).join('');
+}
+
+function addSubject() {
+  const inp = document.getElementById('new-subject-input');
+  const name = inp.value.trim();
+  if (!name) return;
+  const subjects = getSubjects();
+  if (subjects.includes(name)) { alert('すでに存在する科目です'); return; }
+  subjects.push(name);
+  saveSubjects(subjects);
+  inp.value = '';
+  renderSubjects();
+  refreshSubjectSelects();
+}
+
+function deleteSubject(name) {
+  if (!confirm(`「${name}」を削除しますか？`)) return;
+  const subjects = getSubjects().filter(s => s !== name);
+  saveSubjects(subjects);
+  renderSubjects();
+  refreshSubjectSelects();
+}
+
+function refreshSubjectSelects() {
+  populateSelect('timer-subject');
+  populateSelect('task-subject-sel');
+}
+
+function populateSelect(id, selected = '') {
+  const sel = document.getElementById(id);
+  if (!sel) return;
+  const subjects = getSubjects();
+  const cur = selected || sel.value;
+  sel.innerHTML = '<option value="">科目を選択</option>' + subjects.map(s =>
+    `<option value="${escHtml(s)}" ${s === cur ? 'selected' : ''}>${escHtml(s)}</option>`
+  ).join('');
+}
+
+// ===== UTILS =====
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ===== INIT =====
+function init() {
+  document.getElementById('date-display').textContent = formatDateDisplay(state.currentDate);
+  refreshSubjectSelects();
+  renderTimerPage();
+
+  // Close modals on overlay click
+  document.getElementById('save-modal').addEventListener('click', function(e) {
+    if (e.target === this) { /* don't close confirm modal on overlay click */ }
+  });
+  document.getElementById('edit-record-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeEditRecordModal();
+  });
+
+  // Enter key on new subject
+  document.getElementById('new-subject-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') addSubject();
+  });
+}
+
+init();
+</script>
+</body>
+</html>
